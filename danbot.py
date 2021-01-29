@@ -1,6 +1,7 @@
 import asyncio
 import os
 import random
+import re
 from urllib.parse import quote
 
 import discord
@@ -13,22 +14,41 @@ intents = discord.Intents(messages=True, guilds=True, reactions=True)
 bot = commands.Bot(command_prefix='>',
                    description=f"DanBot {version}", intents=intents)
 
-status_content = "I gotta be honest Im kinda retarded".split(" ")
 
 # Initialize Chatterbot
-chatbot = ChatBot('DanBot')
-trainer = ChatterBotCorpusTrainer(chatbot)
-trainer.train(
-    "chatterbot.corpus.english",
-    "chatterbot.corpus.english.greetings",
-    "chatterbot.corpus.english.conversations"
+needs_training = not os.path.isfile('./db.sqlite3')
+
+chatbot = ChatBot(
+    'DanBot',
+    storage_adapter='chatterbot.storage.SQLStorageAdapter',
+    database_uri='sqlite:///db.sqlite3'
 )
-feeling_chatty = False
+
+if needs_training:
+    trainer = ChatterBotCorpusTrainer(chatbot)
+    trainer.train(
+        "chatterbot.corpus.english",
+        "chatterbot.corpus.english.greetings",
+        "chatterbot.corpus.english.conversations"
+    )
+
+
+danbot_re = re.compile('(?m)(?i)DanBot')
+chatty_channels = []
 
 
 @bot.event
 async def on_ready():
     print(f"[DanBot] - We have logged in as {bot.user}")
+
+    status_content = "I gotta be honest Im kinda retarded".split(" ")
+    random.shuffle(status_content)
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name=f"{' '.join(status_content)}"
+        )
+    )
 
 
 @bot.command(
@@ -154,11 +174,11 @@ async def live_timer(ctx, *args):
     help="Let DanBot try talk to you. (He won't bite, I think :/)"
 )
 async def chat(ctx):
-    response = chatbot.get_response("Hello")
+    global chatty_channels
+    chatty_channels += [ctx.channel.id]
 
+    response = chatbot.get_response("Hello")
     await ctx.reply(response)
-    global feeling_chatty
-    feeling_chatty = True
 
 
 @bot.command(
@@ -167,9 +187,10 @@ async def chat(ctx):
     help="Make DanBot stop talking!"
 )
 async def stop_chat(ctx):
+    global chatty_channels
+    if ctx.channel.id in chatty_channels:
+        chatty_channels.remove(ctx.channel.id)
     await ctx.send(f"Ok {ctx.author.mention} I'll stop now, it was nice chatting with you. :-)")
-    global feeling_chatty
-    feeling_chatty = False
 
 
 @bot.command(name="serverinfo")
@@ -212,22 +233,12 @@ async def on_message(message):
     await bot.process_commands(message)
 
     global chatbot
-    global feeling_chatty
-    if feeling_chatty:
+    global chatty_channels
+    if message.channel.id in chatty_channels:
         response = chatbot.get_response(message.content)
         await message.channel.send(response)
 
-    random.shuffle(status_content)
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=f"You {' '.join(status_content)}"
-        )
-    )
-
-    msg_words = message.content.lower().split(" ")
-
-    if "danbot" in msg_words:
+    if danbot_re.search(message.content):
         await message.channel.send('Hewwo UwU?')
 
     if message.content == "load phas":
