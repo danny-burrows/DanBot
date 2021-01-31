@@ -1,0 +1,99 @@
+<html>
+
+<body>
+
+    <style>
+        :root {
+            --bluerrrrr: #1e90ff;
+        }
+
+        body {
+            background-color: #36393f;
+            font-family: Whitney, Helvetica Neue, Helvetica, Arial, sans-serif;
+            font-size: 22px;
+        }
+
+        h1 {
+            color: #fff;
+            margin-top: 5px;
+        }
+
+        .card {
+            height: 320px;
+            justify-content: center;
+            background-color: #202225;
+            position: relative;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+            max-width: 800px;
+            margin: auto;
+            text-align: center;
+            border: 1px;
+            border-radius: 10px;
+        }
+
+        .title {
+            color: #b9bbbe;
+            font-size: 22px;
+        }
+
+        .img {
+            position: relative;
+            margin: 20px;
+            border-radius: 100%;
+            box-shadow: 0 0 0 4px #202225,
+            0 0 0 8px {{ colour }};
+        }
+
+        a {
+            text-decoration: none;
+            font-size: 22px;
+            color: black;
+        }
+
+        button:hover,
+        a:hover {
+            opacity: 0.7;
+        }
+
+        .left {
+            display: inline;
+            float: left;
+            margin: 10px;
+            margin-left: 70px;
+        }
+
+        .right {
+            display: inline;
+            float: right;
+            margin: 50px;
+            margin-right: 95px;
+            margin-left: 0px;
+            margin-bottom: 0px;
+            height: 260px;
+	    max-width: 250px;
+        }
+    </style>
+
+    <!-- Add icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <div class="card">
+        <div class="left">
+            <img src="https://cdn.discordapp.com/avatars/{{ id }}/{{ avatar }}.png?size=256" width=256 height=256
+                class="img">
+        </div>
+        <div class="right">
+            <h1>{{ name }}<font color="#b9bbbe">{{ tag }}</font></h1>
+            <p class="title">A.k.a. <font color="{{ colour }}">{{nick}}</font>@<font color="#fff">{{ guild }}</font></p>
+	    {% for role in roles %}
+                <p style="padding: 5px 12px 5px 12px;border: 2px solid {{ role.colour }};border-radius:40px;"><font color="{{ role.colour }}">• {{ role.name }}</font></p>
+	    {% endfor %}
+            <!--<a href="#"><i class="fa fa-dribbble"></i></a>
+            <a href="#"><i class="fa fa-twitter"></i></a>
+            <a href="#"><i class="fa fa-linkedin"></i></a>
+            <a href="#"><i class="fa fa-facebook"></i></a>-->
+        </div>
+    </div>
+</body>
+
+</html>

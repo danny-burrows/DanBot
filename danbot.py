@@ -1,19 +1,27 @@
 import asyncio
+import io
 import os
 import random
 import re
 from urllib.parse import quote
 
 import discord
+import imgkit
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 from discord.ext import commands
+from jinja2 import Environment, FileSystemLoader
 
-version = "v0.1"
-intents = discord.Intents(messages=True, guilds=True, reactions=True)
-bot = commands.Bot(command_prefix='>',
-                   description=f"DanBot {version}", intents=intents)
+print("[DanBot] - Initializing...")
 
+version = "v0.2"
+intents = discord.Intents.default()
+intents.members = True  # Gotta subscribe to the privileged members intent.
+bot = commands.Bot(
+    command_prefix='>',
+    description=f"DanBot {version}",
+    intents=intents
+)
 
 # Initialize Chatterbot
 needs_training = not os.path.isfile('./db.sqlite3')
@@ -32,6 +40,12 @@ if needs_training:
         "chatterbot.corpus.english.conversations"
     )
 
+# Initialize Imgkit & Jinja2
+config = imgkit.config(
+    wkhtmltoimage="C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
+)
+file_loader = FileSystemLoader('templates')
+jinja_env = Environment(loader=file_loader)
 
 danbot_re = re.compile('(?m)(?i)DanBot')
 chatty_channels = []
@@ -58,6 +72,46 @@ async def on_ready():
 )
 async def ping(ctx):
     await ctx.send("pong!")
+
+
+@bot.command(
+    name="card",
+    aliases=["Card"],
+    help="Get your user card.",
+)
+async def card(ctx):
+    template = jinja_env.get_template('temp01.html')
+
+    guild = nick = ""
+    roles = []
+    if ctx.guild:
+        guild = ctx.guild.name
+        mem = ctx.guild.get_member(ctx.author.id)
+        nick = mem.nick
+        roles = [mem.top_role]
+
+    output = template.render(
+        id=ctx.author.id,
+        name=ctx.author.name,
+        tag=f"#{ctx.author.discriminator}",
+        avatar=ctx.author.avatar,
+        guild=guild,
+        nick=nick,
+        roles=roles,
+        colour=ctx.author.colour
+    )
+
+    options = {
+        'format': 'png',
+        'quality': '69',
+        'encoding': "UTF-8",
+        'width': '900'
+    }
+
+    img = imgkit.from_string(output, False, config=config, options=options)
+    img_data = io.BytesIO(img)
+
+    await ctx.send(file=discord.File(img_data, 'user_card.png'))
 
 
 @bot.command(
@@ -232,8 +286,6 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-    global chatbot
-    global chatty_channels
     if message.channel.id in chatty_channels:
         response = chatbot.get_response(message.content)
         await message.channel.send(response)
