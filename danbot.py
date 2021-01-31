@@ -96,7 +96,7 @@ async def card(ctx, arg=""):
     if ctx.guild:
         guild = ctx.guild.name
         mem = ctx.guild.get_member(user.id)
-        nick = mem.nick
+        nick = mem.nick if mem.nick else user.name
         roles = [mem.top_role]
         colour = mem.colour
 
@@ -115,7 +115,7 @@ async def card(ctx, arg=""):
         'format': 'png',
         'quality': '69',
         'encoding': "UTF-8",
-        'width': '900'
+        'width': '825'
     }
 
     img = imgkit.from_string(output, False, config=config, options=options)
