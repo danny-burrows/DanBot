@@ -79,26 +79,36 @@ async def ping(ctx):
     aliases=["Card"],
     help="Get your user card.",
 )
-async def card(ctx):
+async def card(ctx, arg=""):
+    if len(arg) and arg.startswith("<@") and arg.endswith(">"):
+        user_id = arg[2:][:-1]
+        if user_id.startswith("!"):
+            user_id = user_id[1:]
+        user = await bot.fetch_user(user_id)
+    else:
+        user = ctx.author
+
     template = jinja_env.get_template('temp01.html')
 
-    guild = nick = ""
+    guild = nick = "Private"
+    colour = "fff"
     roles = []
     if ctx.guild:
         guild = ctx.guild.name
-        mem = ctx.guild.get_member(ctx.author.id)
+        mem = ctx.guild.get_member(user.id)
         nick = mem.nick
         roles = [mem.top_role]
+        colour = mem.colour
 
     output = template.render(
-        id=ctx.author.id,
-        name=ctx.author.name,
-        tag=f"#{ctx.author.discriminator}",
-        avatar=ctx.author.avatar,
+        id=user.id,
+        name=user.name,
+        tag=f"#{user.discriminator}",
+        avatar=user.avatar,
         guild=guild,
         nick=nick,
         roles=roles,
-        colour=ctx.author.colour
+        colour=colour
     )
 
     options = {
@@ -183,6 +193,8 @@ async def timer(ctx, *args):
             m = int(i[:-1])
         elif i[-1].lower() == "s":
             s = int(i[:-1])
+        elif i.isnumeric():
+            s = int(i)
 
     await ctx.send(f'Setting a {" ".join(args)} timer for {ctx.author.mention}.')
 
@@ -194,7 +206,7 @@ async def timer(ctx, *args):
 
 @bot.command(
     name="livetimer",
-    aliases=['LiveTimer'],
+    aliases=['LiveTimer', 'countdown', 'Countdown'],
     help="DanBot can set live timer that counts down. \ne.g. >livetimer 2h 30m 25s"
 )
 async def live_timer(ctx, *args):
@@ -208,10 +220,12 @@ async def live_timer(ctx, *args):
             m = int(i[:-1])
         elif i[-1].lower() == "s":
             s = int(i[:-1])
+        elif i.isnumeric():
+            s = int(i)
 
     time = (h*60*60)+(m*60)+s
 
-    await ctx.send(f'Setting a {" ".join(args)} timer for {ctx.author.mention}.')
+    await ctx.send(f'Setting a {" ".join(args)} second timer for {ctx.author.mention}.')
 
     msg = await ctx.send(content=f"`{time} seconds left`")
 
