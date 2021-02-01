@@ -41,9 +41,7 @@ if needs_training:
     )
 
 # Initialize Imgkit & Jinja2
-config = imgkit.config(
-    wkhtmltoimage="C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
-)
+config = imgkit.config()
 file_loader = FileSystemLoader('templates')
 jinja_env = Environment(loader=file_loader)
 
@@ -111,6 +109,7 @@ async def card(ctx, arg=""):
     )
 
     options = {
+        'quiet': '',
         'format': 'png',
         'quality': '69',
         'encoding': "UTF-8",
