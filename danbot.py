@@ -55,12 +55,10 @@ chatty_channels = []
 async def on_ready():
     print(f"[DanBot] - We have logged in as {bot.user}")
 
-    status_content = "I gotta be honest Im kinda retarded".split(" ")
-    random.shuffle(status_content)
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
-            name=f"{' '.join(status_content)}"
+            name=f"for >help"
         )
     )
 
