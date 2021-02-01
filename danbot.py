@@ -96,13 +96,14 @@ async def card(ctx, arg=""):
     if ctx.guild:
         guild = ctx.guild.name
         mem = ctx.guild.get_member(user.id)
-        nick = mem.nick if mem.nick else user.name
+        nick = mem.nick.replace(
+            "  ", " ") if mem.nick else user.name.replace("  ", " ")
         roles = [mem.top_role]
-        colour = mem.colour
+        colour = mem.colour if str(mem.colour) != "#000000" else "#b9bbbe"
 
     output = template.render(
         id=user.id,
-        name=user.name,
+        name=user.name.replace("  ", " "),
         tag=f"#{user.discriminator}",
         avatar=user.avatar,
         guild=guild,
@@ -115,7 +116,7 @@ async def card(ctx, arg=""):
         'format': 'png',
         'quality': '69',
         'encoding': "UTF-8",
-        'width': '825'
+        'width': '815'
     }
 
     img = imgkit.from_string(output, False, config=config, options=options)
