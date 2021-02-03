@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 import asyncio
 import io
+import logging
 import os
 import random
 import re
@@ -12,7 +15,8 @@ from chatterbot.trainers import ChatterBotCorpusTrainer
 from discord.ext import commands
 from jinja2 import Environment, FileSystemLoader
 
-print("[DanBot] - Initializing...")
+logging.basicConfig(level=logging.INFO)
+logging.debug("[DanBot] - Initializing...")
 
 version = "v0.2"
 intents = discord.Intents.default()
@@ -51,7 +55,7 @@ chatty_channels = []
 
 @bot.event
 async def on_ready():
-    print(f"[DanBot] - We have logged in as {bot.user}")
+    logging.debug(f"[DanBot] - We have logged in as {bot.user}")
 
     await bot.change_presence(
         activity=discord.Activity(
@@ -325,6 +329,6 @@ if __name__ == "__main__":
     if not bot_token:
         raise ValueError("Couldn't retrieve bot token!")
 
-    print("[DanBot] - Got bot token!")
+    logging.debug("[DanBot] - Got bot token!")
 
     bot.run(bot_token)
