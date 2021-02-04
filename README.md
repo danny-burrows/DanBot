@@ -1,5 +1,7 @@
-# DanBot
+# DanBot 
 Just another discord bot.
+
+<img height=100 src="https://i.imgur.com/0QdtDn8.png">
 
 ## Requirements & Setup
 Python >=3.6, <=3.8 are required. This is due to chatterbot currently not working on anything over Python 3.8.
@@ -18,3 +20,7 @@ sudo apt install wkhtmltopdf
 
 - Windows...
 Install the binaries here http://wkhtmltopdf.org/.
+
+## Useful Links
+- [Imgkit](https://github.com/jarrekk/imgkit)
+- [Chatterbot](https://github.com/gunthercox/ChatterBot)
