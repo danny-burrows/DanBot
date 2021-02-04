@@ -10,10 +10,9 @@ from urllib.parse import quote
 
 import discord
 import imgkit
-from chatterbot import ChatBot
-from chatterbot.trainers import ChatterBotCorpusTrainer
 from discord.ext import commands
 from jinja2 import Environment, FileSystemLoader
+from chat import DanBotChat
 
 logging.basicConfig(level=logging.INFO)
 logging.debug("[DanBot] - Initializing...")
@@ -27,30 +26,12 @@ bot = commands.Bot(
     intents=intents
 )
 
-# Initialize Chatterbot
-needs_training = not os.path.isfile('./db.sqlite3')
-
-chatbot = ChatBot(
-    'DanBot',
-    storage_adapter='chatterbot.storage.SQLStorageAdapter',
-    database_uri='sqlite:///db.sqlite3'
-)
-
-if needs_training:
-    trainer = ChatterBotCorpusTrainer(chatbot)
-    trainer.train(
-        "chatterbot.corpus.english",
-        "chatterbot.corpus.english.greetings",
-        "chatterbot.corpus.english.conversations"
-    )
-
 # Initialize Imgkit & Jinja2
 config = imgkit.config()
 file_loader = FileSystemLoader('templates')
 jinja_env = Environment(loader=file_loader)
 
 danbot_re = re.compile('(?m)(?i)DanBot')
-chatty_channels = []
 
 
 @bot.event
@@ -238,31 +219,6 @@ async def live_timer(ctx, *args):
     await msg.edit(content=f'`BEEP BEEP!`')
 
 
-@bot.command(
-    name="chat",
-    aliases=['Chat'],
-    help="Let DanBot try talk to you. (He won't bite, I think :/)"
-)
-async def chat(ctx):
-    global chatty_channels
-    chatty_channels += [ctx.channel.id]
-
-    response = chatbot.get_response("Hello")
-    await ctx.reply(response)
-
-
-@bot.command(
-    name="stop",
-    aliases=['quit'],
-    help="Make DanBot stop talking!"
-)
-async def stop_chat(ctx):
-    global chatty_channels
-    if ctx.channel.id in chatty_channels:
-        chatty_channels.remove(ctx.channel.id)
-    await ctx.send(f"Ok {ctx.author.mention} I'll stop now, it was nice chatting with you. :-)")
-
-
 @bot.command(name="serverinfo")
 async def server_info(ctx):
     # Some lines are commented as they require the members intent.
@@ -302,10 +258,6 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-    if message.channel.id in chatty_channels:
-        response = chatbot.get_response(message.content)
-        await message.channel.send(response)
-
     if danbot_re.search(message.content):
         await message.channel.send('Hewwo UwU?')
 
@@ -330,5 +282,7 @@ if __name__ == "__main__":
         raise ValueError("Couldn't retrieve bot token!")
 
     logging.debug("[DanBot] - Got bot token!")
+
+    bot.add_cog(DanBotChat(bot))
 
     bot.run(bot_token)
