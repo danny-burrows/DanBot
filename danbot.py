@@ -14,6 +14,8 @@ from discord.ext import commands
 from jinja2 import Environment, FileSystemLoader
 from chat import DanBotChat
 
+development_mode = True
+
 logging.basicConfig(level=logging.INFO)
 logging.debug("[DanBot] - Initializing...")
 
@@ -38,12 +40,22 @@ danbot_re = re.compile('(?m)(?i)DanBot')
 async def on_ready():
     logging.debug(f"[DanBot] - We have logged in as {bot.user}")
 
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=f"for >help"
+    if development_mode:
+        return await bot.change_presence(
+            status=discord.Status.dnd,
+            activity=discord.Activity(
+                type=discord.ActivityType.listening,
+                name=f"my overlords"
+            )
         )
-    )
+    else:
+        await bot.change_presence(status=discord.Status.online)
+        await bot.change_presence(
+            activity=discord.Activity(
+                type=discord.ActivityType.watching,
+                name=f"for >help"
+            )
+        )
 
 
 @bot.command(
@@ -60,7 +72,7 @@ async def ping(ctx):
     aliases=["Card"],
     help="Get your user card.",
 )
-async def card(ctx, arg=""):
+async def card(ctx, arg="", template_name="card.html"):
     if len(arg) and arg.startswith("<@") and arg.endswith(">"):
         user_id = arg[2:][:-1]
         if user_id.startswith("!"):
@@ -69,7 +81,7 @@ async def card(ctx, arg=""):
     else:
         user = ctx.author
 
-    template = jinja_env.get_template('temp01.html')
+    template = jinja_env.get_template(template_name)
 
     guild = nick = "Private"
     colour = "fff"
@@ -105,6 +117,15 @@ async def card(ctx, arg=""):
     img_data = io.BytesIO(img)
 
     await ctx.send(file=discord.File(img_data, 'user_card.png'))
+
+
+@bot.command(
+    name="neoncard",
+    aliases=["NeonCard"],
+    help="Get your user card.",
+)
+async def neon_card(ctx, arg=""):
+    return await card(ctx, arg, 'card_neon.html')
 
 
 @bot.command(
