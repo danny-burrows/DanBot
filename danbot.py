@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import asyncio
-import io
 import logging
 import os
 import random
@@ -9,11 +8,10 @@ import re
 from urllib.parse import quote
 
 import discord
-import imgkit
-import imageio
 from discord.ext import commands
-from jinja2 import Environment, FileSystemLoader
+
 from chat import DanBotChat
+from image import DanBotImage
 
 development_mode = True
 
@@ -28,11 +26,6 @@ bot = commands.Bot(
     description=f"DanBot {version}",
     intents=intents
 )
-
-# Initialize Imgkit & Jinja2
-config = imgkit.config()
-file_loader = FileSystemLoader('templates')
-jinja_env = Environment(loader=file_loader)
 
 danbot_re = re.compile('(?m)(?i)DanBot')
 
@@ -66,164 +59,6 @@ async def on_ready():
 )
 async def ping(ctx):
     await ctx.send("pong!")
-
-
-@bot.command(
-    name="card",
-    aliases=["Card"],
-    help="Get your user card.",
-)
-async def card(ctx, arg="", template_name="card.html"):
-    if len(arg) and arg.startswith("<@") and arg.endswith(">"):
-        user_id = arg[2:][:-1]
-        if user_id.startswith("!"):
-            user_id = user_id[1:]
-        user = await bot.fetch_user(user_id)
-    else:
-        user = ctx.author
-
-    template = jinja_env.get_template(template_name)
-
-    guild = nick = "Private"
-    colour = "fff"
-    roles = []
-    if ctx.guild:
-        guild = ctx.guild.name
-        mem = ctx.guild.get_member(user.id)
-        nick = mem.nick.replace(
-            "  ", " ") if mem.nick else user.name.replace("  ", " ")
-        roles = [mem.top_role]
-        colour = mem.colour if str(mem.colour) != "#000000" else "#b9bbbe"
-
-    output = template.render(
-        id=user.id,
-        name=user.name.replace("  ", " "),
-        tag=f"#{user.discriminator}",
-        avatar=user.avatar,
-        guild=guild,
-        nick=nick,
-        roles=roles,
-        colour=colour
-    )
-
-    options = {
-        'quiet': '',
-        'format': 'png',
-        'quality': '69',
-        'encoding': "UTF-8",
-        'width': '815'
-    }
-
-    img = imgkit.from_string(output, False, config=config, options=options)
-    img_data = io.BytesIO(img)
-
-    await ctx.send(file=discord.File(img_data, 'user_card.png'))
-
-
-@bot.command(
-    name="neoncard",
-    aliases=["NeonCard"],
-    help="Get your user card.",
-)
-async def neon_card(ctx, arg=""):
-    return await card(ctx, arg, 'card_neon.html')
-
-
-def loading_bar(percentage):
-    loading_txt = f"              Loading... 0%"
-    loading_bar = "|                                               |"
-    
-    if percentage == 0:
-        return f"```\n{loading_txt}\n{loading_bar}\n```"
-
-    segments = 100
-    seg_length = len(loading_bar) / segments
-
-    loading_txt = f"              Loading... {percentage}%"
-    loading_bar = f"|{'='*int(seg_length*percentage)}{' '*int(seg_length*(segments-percentage))}|"
-
-    return f"```\n{loading_txt}\n{loading_bar}\n```"
-
-
-@bot.command(
-    name="neoncardmot",
-    aliases=["NeonCardMot"],
-    help="Get your user card.",
-)
-async def neon_card_mot(ctx, arg=""):
-
-    msg = await ctx.send(loading_bar(0))
-
-    if len(arg) and arg.startswith("<@") and arg.endswith(">"):
-        user_id = arg[2:][:-1]
-        if user_id.startswith("!"):
-            user_id = user_id[1:]
-        user = await bot.fetch_user(user_id)
-    else:
-        user = ctx.author
-
-    await msg.edit(content=loading_bar(10))
-
-    template = jinja_env.get_template("card_neon_mot.html")
-
-    guild = nick = "Private"
-    colour = "fff"
-    roles = []
-    if ctx.guild:
-        guild = ctx.guild.name
-        mem = ctx.guild.get_member(user.id)
-        nick = mem.nick.replace(
-            "  ", " ") if mem.nick else user.name.replace("  ", " ")
-        roles = [mem.top_role]
-        colour = mem.colour if str(mem.colour) != "#000000" else "#b9bbbe"
-
-    await msg.edit(content=loading_bar(30))
-
-    outputs = []
-    hues = [i for i in range(5)] + [i for i in range(5, 0, -1)]
-    print(hues)
-    hue = 13
-    x = 0
-    for i in hues:
-        await msg.edit(content=loading_bar(40+x+1))
-        outputs.append(template.render(
-            id=user.id,
-            name=user.name.replace("  ", " "),
-            tag=f"#{user.discriminator}",
-            avatar=user.avatar,
-            guild=guild,
-            nick=nick,
-            roles=roles,
-            colour=colour,
-            hue=(hue + (i*5))
-        ))
-        x+=2
-
-    options = {
-        'quiet': '',
-        'format': 'png',
-        'quality': '69',
-        'encoding': "UTF-8",
-        'width': '815'
-    }
-
-    imgs = []
-    x = 0
-    for i, output in enumerate(outputs):
-        await msg.edit(content=loading_bar(60+x+1))
-        filename = f"templates/ani/ani_{i}.png"
-        img = imgkit.from_string(output, False, config=config, options=options)
-        img_data = io.BytesIO(img)
-        imgs.append(imageio.imread(img_data))
-        x+=2
-
-    await msg.edit(content=loading_bar(80))
-    imageio.mimsave('test.gif', imgs, duration=0.6)
-
-    await msg.edit(content=loading_bar(90))
-    await ctx.send(file=discord.File('test.gif'))
-    await msg.delete()
-    # await ctx.send(file=discord.File(img_data, 'user_card.png'))
 
 
 @bot.command(
@@ -402,6 +237,7 @@ if __name__ == "__main__":
 
     logging.debug("[DanBot] - Got bot token!")
 
+    bot.add_cog(DanBotImage(bot))
     bot.add_cog(DanBotChat(bot))
 
     bot.run(bot_token)
