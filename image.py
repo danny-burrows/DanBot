@@ -12,6 +12,7 @@ from utils import loading_bar
 class DanBotImage(commands.Cog, name="Images"):
 
     def __init__(self, bot):
+        self.bot = bot
         # Initialize Imgkit & Jinja2
         self.imgkit_config = imgkit.config()
         self.imgkit_options = {
@@ -30,7 +31,7 @@ class DanBotImage(commands.Cog, name="Images"):
             user_id = arg[2:][:-1]
             if user_id.startswith("!"):
                 user_id = user_id[1:]
-            user = await bot.fetch_user(user_id)
+            user = await self.bot.fetch_user(user_id)
         else:
             user = ctx.author
 
@@ -76,25 +77,35 @@ class DanBotImage(commands.Cog, name="Images"):
         help="Get your user card.",
     )
     async def card(self, ctx, arg=""):
+        msg = await ctx.send(loading_bar(0))
         card_info = await self.get_card_info(ctx, arg)
+        await msg.edit(content=loading_bar(40))
         img_data = self.build_card(ctx, card_info, "card.html")
-        return await ctx.send(file=discord.File(img_data, 'user_card.png'))
+        await msg.edit(content=loading_bar(80))
+        await ctx.send(file=discord.File(img_data, 'user_card.png'))
+        await msg.edit(content=loading_bar(90))
+        await msg.delete()
 
     @commands.command(
         name="neoncard",
         aliases=["NeonCard"],
-        help="Get your user card.",
+        help="Get a neon user card.",
     )
     async def neon_card(self, ctx, arg=""):
+        msg = await ctx.send(loading_bar(0))
         card_info = await self.get_card_info(ctx, arg)
+        await msg.edit(content=loading_bar(40))
         img_data = self.build_card(
             ctx, card_info, 'card_neon.html', background_hue=13)
-        return await ctx.send(file=discord.File(img_data, 'user_card_neon.png'))
+        await msg.edit(content=loading_bar(80))
+        await ctx.send(file=discord.File(img_data, 'user_card_neon.png'))
+        await msg.edit(content=loading_bar(90))
+        await msg.delete()
 
     @commands.command(
         name="neoncardgif",
         aliases=["NeonCardGif"],
-        help="Get your user card.",
+        help="Get an animated neon user card.",
     )
     async def neon_card_gif(self, ctx, arg=""):
         msg = await ctx.send(loading_bar(0))
