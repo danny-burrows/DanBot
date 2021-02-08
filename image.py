@@ -26,6 +26,9 @@ class DanBotImage(commands.Cog, name="Images"):
         file_loader = FileSystemLoader('templates')
         self.jinja_env = Environment(loader=file_loader)
 
+        self.card_template = self.jinja_env.get_template("card.html")
+        self.neon_card_template = self.jinja_env.get_template("card_neon.html")
+
     async def get_card_info(self, ctx, arg):
         if len(arg) and arg.startswith("<@") and arg.endswith(">"):
             user_id = arg[2:][:-1]
@@ -48,9 +51,7 @@ class DanBotImage(commands.Cog, name="Images"):
 
         return user, guild, nick, roles, colour
 
-    def build_card(self, ctx, card_info, template_name="card.html", background_hue=""):
-        template = self.jinja_env.get_template(template_name)
-
+    def build_card(self, ctx, card_info, template, background_hue=""):
         user, guild, nick, roles, colour = card_info
 
         output = template.render(
@@ -80,7 +81,7 @@ class DanBotImage(commands.Cog, name="Images"):
         msg = await ctx.send(loading_bar(0))
         card_info = await self.get_card_info(ctx, arg)
         await msg.edit(content=loading_bar(40))
-        img_data = self.build_card(ctx, card_info, "card.html")
+        img_data = self.build_card(ctx, card_info, self.card_template)
         await msg.edit(content=loading_bar(80))
         await ctx.send(file=discord.File(img_data, 'user_card.png'))
         await msg.edit(content=loading_bar(90))
@@ -96,7 +97,7 @@ class DanBotImage(commands.Cog, name="Images"):
         card_info = await self.get_card_info(ctx, arg)
         await msg.edit(content=loading_bar(40))
         img_data = self.build_card(
-            ctx, card_info, 'card_neon.html', background_hue=13)
+            ctx, card_info, self.neon_card_template, background_hue=13)
         await msg.edit(content=loading_bar(80))
         await ctx.send(file=discord.File(img_data, 'user_card_neon.png'))
         await msg.edit(content=loading_bar(90))
@@ -110,22 +111,24 @@ class DanBotImage(commands.Cog, name="Images"):
     async def neon_card_gif(self, ctx, arg=""):
         msg = await ctx.send(loading_bar(0))
         card_info = await self.get_card_info(ctx, arg)
-        await msg.edit(content=loading_bar(20))
+        await msg.edit(content=loading_bar(10))
 
         frames = []
         base_hue = 13
-        hues = [0 for i in range(5)] + [i for i in range(5)] + \
-            [i for i in range(5, 0, -1)]
+        hues = [i for i in range(20)]
         await msg.edit(content=loading_bar(20))
         for perc, hue in enumerate(hues):
             img_data = self.build_card(
-                ctx, card_info, "card_neon.html", background_hue=(base_hue + (hue*4)))
-            await msg.edit(content=loading_bar(40+perc+1))
-            frames.append(imageio.imread(img_data))
-            await msg.edit(content=loading_bar(40+perc+2))
+                ctx, card_info, self.neon_card_template, background_hue="{:02x}".format(19 + (hue*2)))
+            await msg.edit(content=loading_bar(20+(perc*2)))
+            frames += [imageio.imread(img_data)]
+            await msg.edit(content=loading_bar(21+(perc*2)))
 
         await msg.edit(content=loading_bar(60))
-        imageio.mimsave('test.gif', frames, duration=0.2)
+        frames += frames[:-1][::-1] + [frames[0]]*10
+
+        await msg.edit(content=loading_bar(70))
+        imageio.mimsave('test.gif', frames)  # , duration=0.1)
         await msg.edit(content=loading_bar(80))
 
         await ctx.send(file=discord.File('test.gif'))
