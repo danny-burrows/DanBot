@@ -1,10 +1,10 @@
 import io
 
-import imageio
-import imgkit
 import discord
+import imgkit
 from discord.ext import commands
 from jinja2 import Environment, FileSystemLoader
+from PIL import Image
 
 from utils import loading_bar
 
@@ -114,24 +114,31 @@ class DanBotImage(commands.Cog, name="Images"):
         await msg.edit(content=loading_bar(10))
 
         frames = []
-        base_hue = 13
         hues = [i for i in range(20)]
         await msg.edit(content=loading_bar(20))
         for perc, hue in enumerate(hues):
             img_data = self.build_card(
                 ctx, card_info, self.neon_card_template, background_hue="{:02x}".format(19 + (hue*2)))
             await msg.edit(content=loading_bar(20+(perc*2)))
-            frames += [imageio.imread(img_data)]
+            frames += [Image.open(img_data)]
             await msg.edit(content=loading_bar(21+(perc*2)))
 
         await msg.edit(content=loading_bar(60))
         frames += frames[:-1][::-1] + [frames[0]]*10
 
         await msg.edit(content=loading_bar(70))
-        imageio.mimsave('test.gif', frames)  # , duration=0.1)
-        await msg.edit(content=loading_bar(80))
-
-        await ctx.send(file=discord.File('test.gif'))
+        
+        with io.BytesIO() as image_binary:
+            frames[0].save(
+                image_binary, 
+                format='GIF',
+                append_images=frames[1:],
+                save_all=True,
+                duration=100, 
+                loop=0
+            )
+            image_binary.seek(0)
+            await msg.edit(content=loading_bar(80))
+            await ctx.send(file=discord.File(fp=image_binary, filename="neon_user_card.gif"))
         await msg.edit(content=loading_bar(90))
         await msg.delete()
-        # await ctx.send(file=discord.File(img_data, 'user_card.png'))

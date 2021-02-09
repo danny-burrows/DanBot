@@ -2,4 +2,4 @@ jinja2
 imgkit
 discord
 chatterbot
-imageio
+pillow
