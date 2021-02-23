@@ -24,3 +24,13 @@ Install the binaries here http://wkhtmltopdf.org/.
 ## Useful Links
 - [Imgkit](https://github.com/jarrekk/imgkit)
 - [Chatterbot](https://github.com/gunthercox/ChatterBot)
+
+## Future Plans
+Some features and fixes to come...
+- Mode for only talking to one person at a time.
+- Speed fixes and improvements.
+- Handling SSL disconnect errors that can cause crashes.
+- ASCII dice rolls.
+- Stopping DanBot responding to other bots.
+- Fixing the permission mess with server info.
+- Maybe finding a better host.
