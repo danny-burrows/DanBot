@@ -27,6 +27,7 @@ Install the binaries here http://wkhtmltopdf.org/.
 
 ## Future Plans
 Some features and fixes to come...
+- Replacing jinja2 templating with something more lightweight [String Templating](https://www.geeksforgeeks.org/template-class-in-python/)
 - Mode for only talking to one person at a time.
 - Speed fixes and improvements.
 - Handling SSL disconnect errors that can cause crashes.
